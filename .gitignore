@@ -1,0 +1,47 @@
+# Ignore data files
+*.csv
+*.tsv
+*.json
+*.xml
+*.yaml
+*.yml
+*.h5
+*.hdf5
+*.npz
+*.pkl
+*.db
+*.sqlite
+*.log
+*.out
+*.err
+#*.dat
+bu_*
+# Ignore images and binary data
+#*.png
+#*.jpg
+#*.jpeg
+*.gif
+*.bmp
+*.tiff
+*.svg
+*.webp
+
+# Ignore archives and large files
+*.zip
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.rar
+
+# Ignore temporary and system files
+*.DS_Store
+Thumbs.db
+__pycache__/
+*.pyc
+*.pyo
+*.swp
+
+# Ignore virtual environments
+venv/
+.env/
+bc_*/
