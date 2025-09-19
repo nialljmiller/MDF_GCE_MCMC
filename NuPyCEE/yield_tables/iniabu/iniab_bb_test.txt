@@ -1,0 +1,8 @@
+H Protosolar elemental abundance's from Lodders 2021
+H Yield in mass fraction
+&Isotopes  &Z=0.0
+&H-1       &7.112E-01
+&He-4      &2.770E-01
+&C-12      &3.0450E-03
+&O-16      &7.396E-03
+&Fe-56     &1.355E-03

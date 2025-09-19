@@ -1,0 +1,5 @@
+H Yields from Gronow 2021
+H Compiled by Thomas Trueman (November 2023)  
+&Isotopes  &Z=0.042   &Z=0.014   &Z=0.0014  &Z=0.00014
+&Mn-53     &1.087e-04 &2.634e-05 &1.643e-05 &1.652e-05
+&Fe-60     &8.520e-06 &3.347e-06 &1.291e-07 &1.318e-08

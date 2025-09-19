@@ -1,0 +1,5 @@
+H Yields: Kromer 2015 deflagration in near-Mch CONe WD 
+H Prepared by: Thomas Trueman (January, 2022)
+&Isotopes  &Z=0.02   
+&Mn-53     &3.96e-6 
+&Fe-60     &1.48-07 

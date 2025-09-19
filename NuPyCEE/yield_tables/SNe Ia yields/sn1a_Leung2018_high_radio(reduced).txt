@@ -1,0 +1,5 @@
+H Yields from Leung 2018
+H Compiled by Thomas Trueman (November 2023) 
+&Isotopes  &Z=0.07    &Z=0.042   &Z=0.028   &Z=0.014   &Z=0.007   &Z=0.0014  &Z=1e-30  
+&Mn-53     &1.14e-3   &8.29e-4   &6.56e-4   &5.48e-4   &5.29e-4   &5.21e-4   &5.17e-4  
+&Fe-60     &8.56e-7   &8.18e-7   &8.4e-7    &7.97e-7   &7.94e-7   &1.20e-7   &7.82e-7  
