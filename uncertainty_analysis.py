@@ -10,6 +10,10 @@ import os
 import sys
 import numpy as np
 import pandas as pd
+import matplotlib
+
+matplotlib.use('Agg')  # Use non-interactive backend suitable for clusters
+
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from scipy.stats import gaussian_kde, bootstrap, percentileofscore

@@ -9,13 +9,15 @@ Authors: N Miller, based on analysis framework
 
 
 import numpy as np
-from scipy.stats import gaussian_kde
 
 import os
 import sys
-import numpy as np
 import re, glob
 import pandas as pd
+import matplotlib
+
+matplotlib.use('Agg')  # Use non-interactive backend for headless environments
+
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from itertools import cycle

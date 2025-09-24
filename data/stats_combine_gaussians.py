@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 import numpy as np
+import matplotlib
+
+matplotlib.use('Agg')  # Ensure plots render without a display server
+
 import matplotlib.pyplot as plt
 from scipy.stats import norm
 import pandas as pd
@@ -251,9 +255,12 @@ def create_corrected_mdf_combination(
             ax4.set_xlim(feh_range)
         
         plt.tight_layout()
-        plt.savefig(output_file.replace('.dat', '_comparison.png'), 
-                   dpi=300, bbox_inches='tight')
-        plt.show()
+        plt.savefig(
+            output_file.replace('.dat', '_comparison.png'),
+            dpi=300,
+            bbox_inches='tight',
+        )
+        plt.close(fig)
     
     return x, combined_mdf
 
