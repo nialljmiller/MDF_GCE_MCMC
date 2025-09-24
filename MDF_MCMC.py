@@ -66,10 +66,10 @@ class GalacticEvolutionMCMC:
     # spec: (public name, key in pcard dict, log-scale mapping?)
     _CONT_SPEC = [
         ("sigma_2",              "sigma_2_list",              False),
-        ("tmax_1",               "tmax_1_list",               True),
-        ("tmax_2",               "tmax_2_list",               True),
-        ("infall_timescale_1",   "infall_timescale_1_list",   True),
-        ("infall_timescale_2",   "infall_timescale_2_list",   True),
+        ("tmax_1",               "tmax_1_list",               False),
+        ("tmax_2",               "tmax_2_list",               False),
+        ("infall_timescale_1",   "infall_timescale_1_list",   False),
+        ("infall_timescale_2",   "infall_timescale_2_list",   False),
         ("sfe",                  "sfe_array",                 False),
         ("delta_sfe",            "delta_sfe_array",           False),
         ("imf_upper_limits",     "imf_upper_limits",          True),
