@@ -367,15 +367,25 @@ class GalacticEvolutionMCMC:
                 nwalkers, self.nd_active, self.log_prob,
                 moves=move, backend=backend, pool=pool
             )
-            if not resume:
-                sampler.run_mcmc(p0, 1, progress=False)
+            done = int(getattr(sampler, "iteration", 0))
+            save_every = output_interval if (output_interval and output_interval > 0) else None
+            last_save = None
+            if save_every:
+                if done > 0 and done % save_every == 0:
+                    next_output = done + save_every
+                    last_save = done
+                else:
+                    next_output = ((done // save_every) + 1) * save_every
+            else:
+                next_output = None
 
-            done0 = backend.iteration if backend is not None else 1
-            done = done0
             while done < nsteps:
-                step = min(output_interval or 128, nsteps - done)
-                sampler.run_mcmc(None, step, progress=False)
-                done += step
+                step = min(save_every or 128, nsteps - done)
+                initial_state = None
+                if not resume and done == 0:
+                    initial_state = p0
+                sampler.run_mcmc(initial_state, step, progress=False)
+                done = int(getattr(sampler, "iteration", done + step))
                 # record for walker-history compatible stub
                 try:
                     last = sampler.get_last_sample()
@@ -384,8 +394,16 @@ class GalacticEvolutionMCMC:
                 except Exception:
                     pass
 
+                if save_every:
+                    while done >= next_output:
+                        self._save_outputs(sampler, step=done)
+                        last_save = done
+                        next_output += save_every
 
-            if output_interval and ((done) % output_interval == 0 or done == nsteps - 1):
+            if save_every:
+                if last_save != done:
+                    self._save_outputs(sampler, step=done)
+            else:
                 self._save_outputs(sampler, step=done)
 
             return sampler
