@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 import numpy as np
+import matplotlib
+
+matplotlib.use('Agg')  # Ensure plotting works on headless systems
+
 import matplotlib.pyplot as plt
 from scipy.stats import norm
 import pandas as pd
