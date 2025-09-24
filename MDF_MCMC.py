@@ -383,6 +383,9 @@ class GalacticEvolutionMCMC:
                     self.walker_history = list(self._walker_history_list)
                 except Exception:
                     pass
+
+
+            if output_interval and ((done) % output_interval == 0 or done == nsteps - 1):
                 self._save_outputs(sampler, step=done)
 
             return sampler
