@@ -1,20 +1,26 @@
-#!/usr/bin/env bash
-#SBATCH -J bulge_MCMC
-#SBATCH -A <YOUR_ACCOUNT>       # fill this in
-#SBATCH -p mb                   # or teton/bearto
-#SBATCH -N 1
-#SBATCH --exclusive             # grab the whole node
-#SBATCH -t 1-00:00:00           # 1 day
-#SBATCH -o logs/%x_%j.out
-#SBATCH -e logs/%x_%j.err
+#!/bin/bash
+#SBATCH --job-name=bulge_MCMC
+#SBATCH --output=logs/bulge_MCMC_%j.out
+#SBATCH --error=logs/bulge_MCMC_%j.err
+#SBATCH --account=galacticbulge
+#SBATCH --partition=mb                 # Medicine Bow, preemptible
+#SBATCH --qos=fast                     # 12h max; higher priority
+#SBATCH --time=11:59:00
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=96             # grab all cores on the node
+#SBATCH --exclusive
+#SBATCH --requeue
+#SBATCH --signal=B:USR1@120            # warning before preempt/time limit
 
 set -euo pipefail
 mkdir -p logs
 
-# activate your env via alias
-shopt -s expand_aliases
+# activate your python env
 source ~/.bashrc
 zenv
 
 cd "$SLURM_SUBMIT_DIR"
-srun python MDF_MCMC_Launcher.py
+
+# one process bound to all 96 cores
+srun --cpu-bind=cores -n 1 python MDF_MCMC_Launcher.py
