@@ -1,0 +1,12 @@
+niter_total=4096  nwalkers=384  ndim=10  burn=0
+Param	IAT_tau	ESS
+sigma_2	357.3	4402
+tmax_1	639.9	2458
+tmax_2	236.9	6639
+infall_timescale_1	555.1	2834
+infall_timescale_2	624.2	2520
+sfe	194.6	8082
+delta_sfe	288.6	5449
+imf_upper_limits	882.3	1783
+mgal_values	541.6	2904
+nb_array	461.7	3407

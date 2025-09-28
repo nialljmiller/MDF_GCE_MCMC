@@ -1,5 +1,5 @@
 # mcmc_sbatch.sh (CPU, 1 full node)
-#SBATCH -J bulge_mcmc_one
+#SBATCH -J bulge_MCMC
 #SBATCH -p mb
 #SBATCH -N 1
 #SBATCH --ntasks-per-node=96     # one linux task per core
