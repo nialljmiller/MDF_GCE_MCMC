@@ -16,9 +16,9 @@
 set -euo pipefail
 mkdir -p logs
 
-# activate your python env
-source ~/.bashrc
-zenv
+PYENV="${PYENV:-$HOME/python_projects/venv}"
+source "$PYENV/bin/activate"
+
 
 cd "$SLURM_SUBMIT_DIR"
 
