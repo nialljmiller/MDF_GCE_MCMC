@@ -53,21 +53,13 @@ def parse_inlist(path):
 
 
 
-def _resolve_pcard_path(default='bulge_pcard.txt'):
-    for a in sys.argv[1:]:
-        if a and not a.startswith('-'):
-            return a
-    for i, a in enumerate(sys.argv[1:], start=1):
-        if a.startswith('--pcard='):
-            return a.split('=', 1)[1]
-        if a == '--pcard' and i + 1 < len(sys.argv):
-            return sys.argv[i + 1]
-    return default
-
-
 def main():
-    pcard_path = _resolve_pcard_path('bulge_pcard.txt')
-    params = parse_inlist(pcard_path)
+
+    pcard_path = sys.argv[1]
+    pcard_to_be_parsed = os.path.join(pcard_path, 'bulge_pcard.txt')
+
+    # Parse parameters from the 'bulge_pcard.txt' file
+    params = Gal_GA.parse_inlist(pcard_to_be_parsed)
 
     # Normalize scalars -> lists (freezing handled in MDF_MCMC)
     def _ensure_list(x):

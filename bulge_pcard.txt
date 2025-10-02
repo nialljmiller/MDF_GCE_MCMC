@@ -295,8 +295,8 @@ sn1a_assumptions: ['sn1a_Gronow.txt','sn1a_shen.txt']
 # Contentious: High rotation (300 km/s) may overproduce N; average/no rotation standard for bulge.
 # References: Limongi & Chieffi (2018, ApJS, 237, 13) for rotation 0-300 km/s; Prantzos et al. (2018, A&A, 611, A92) rotation in GCE; Choplin et al. (2018, A&A, 611, A47) impact on yields; Nomoto et al. (2013, ARA&A, 51, 457) for HNe.
 ############################################################
-#stellar_yield_assumptions: ['agb_and_massive_stars_K10_LC18_R150.txt', 'agb_and_massive_stars_K10_LC18_Ravg.txt', 'agb_and_massive_stars_K10_LC18_R000.txt', 'agb_and_massive_stars_C15_N13_0_0_HNe.txt']
-stellar_yield_assumptions: ['agb_and_massive_stars_K10_LC18_Ravg.txt']
+stellar_yield_assumptions: ['agb_and_massive_stars_K10_LC18_R150.txt', 'agb_and_massive_stars_K10_LC18_Ravg.txt', 'agb_and_massive_stars_K10_LC18_R000.txt', 'agb_and_massive_stars_C15_N13_0_0_HNe.txt']
+#stellar_yield_assumptions: ['agb_and_massive_stars_K10_LC18_Ravg.txt']
 
 ############################################################
 #

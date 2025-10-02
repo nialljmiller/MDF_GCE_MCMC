@@ -19,8 +19,8 @@ mkdir -p logs
 PYENV="${PYENV:-$HOME/python_projects/venv}"
 source "$PYENV/bin/activate"
 
-
 cd "$SLURM_SUBMIT_DIR"
 
 # one process bound to all 96 cores
-srun --cpu-bind=cores -n 1 python MDF_MCMC_Launcher.py
+FILE_PATH="${1:?usage: $0 <some_file_path>}"
+srun --cpu-bind=cores -n 1 python MDF_MCMC_Launcher.py "$FILE_PATH"
