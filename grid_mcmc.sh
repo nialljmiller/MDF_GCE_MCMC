@@ -1,147 +1,95 @@
 #!/usr/bin/env bash
-# grid_mcmc.sh — sweep categorical combos, rewrite pcard, submit with sbatch.
-# Usage: ./grid_mcmc.sh [path/to/bulge_pcard.txt] [root_out_dir]
-# Defaults: pcard=./bulge_pcard.txt, root_out=runs_mcmc/
+# Usage: ./grid_mcmc.sh [pcard] [root_out] [sbatch_script]
+# Defaults: pcard=./bulge_pcard.txt, root_out=./mcmc_runs, sbatch_script=./mcmc_sbatch.sh
 
 set -euo pipefail
 
 PCARD="${1:-bulge_pcard.txt}"
-ROOT_OUT="${2:-.}"
-SBATCH_SCRIPT="$(pwd)/mcmc_sbatch.sh"   # absolute path to keep sbatch happy
+ROOT_OUT="${2:-mcmc_runs}"
+SBATCH_SCRIPT="${3:-mcmc_sbatch.sh}"
 
-if [[ ! -f "$PCARD" ]]; then
-  echo "Error: pcard not found: $PCARD" >&2
-  exit 1
-fi
-if [[ ! -f "$SBATCH_SCRIPT" ]]; then
-  echo "Error: mcmc_sbatch.sh not found at $SBATCH_SCRIPT" >&2
-  exit 1
-fi
+[[ -f "$PCARD" ]] || { echo "No pcard: $PCARD" >&2; exit 1; }
+[[ -f "$SBATCH_SCRIPT" ]] || { echo "No sbatch script: $SBATCH_SCRIPT" >&2; exit 1; }
 
 mkdir -p "$ROOT_OUT"
 
-# --- Pull categorical lists directly from the pcard using Python (robust to quoting) ---
-readarray -t COMP_LIST < <(python3 - <<'PY' "$PCARD"
-import ast, sys, re
-pc = sys.argv[1]
-txt = open(pc,'r',encoding='utf-8').read()
-def grab(key):
-    m = re.search(rf'^\s*{re.escape(key)}\s*:\s*(.+)$', txt, flags=re.MULTILINE)
-    if not m: return []
-    raw = m.group(1).split('#',1)[0].strip()
-    try:
-        v = ast.literal_eval(raw)
-    except Exception:
-        v = raw.strip().strip("'\"")
-    if isinstance(v, (list, tuple)): return [str(x) for x in v]
-    return [str(v)]
-for key in ("comp_array","imf_array","sn1a_assumptions","stellar_yield_assumptions","sn1a_rates"):
-    vals = grab(key)
-    print("__KEY__", key)
-    for x in vals: print(x)
-PY
-)
-# COMP_LIST is a flattened block like:
-# __KEY__ comp_array
-# val1
-# val2
-# __KEY__ imf_array
-# val1
-# ...
-
-# Split the flattened block into separate Bash arrays
-extract_block () {
-  local key="$1"; shift
-  local -n outarr="$1"; shift
-  local in_key=0
-  outarr=()
-  for line in "${COMP_LIST[@]}"; do
-    if [[ "$line" == "__KEY__ "* ]]; then
-      in_key=0
-      [[ "$line" == "__KEY__ $key" ]] && in_key=1
-      continue
-    fi
-    (( in_key )) && outarr+=("$line")
-  done
+# Return list (space-separated) from a key in pcard; accepts commas/spaces/semicolons
+get_list () {
+  local key="$1"
+  awk -F= -v k="^${key}[[:space:]]*" '
+    $1 ~ k {
+      gsub(/[;\t]/,",",$2);
+      gsub(/[[:space:]]+/," ",$2);
+      gsub(/^[[:space:]]+|[[:space:]]+$/,"",$2);
+      gsub(/,+/," ",$2);
+      print $2
+    }' "$PCARD"
 }
 
-declare -a COMP IMFS SNIa SY SNIaR
-extract_block "comp_array" COMP
-extract_block "imf_array" IMFS
-extract_block "sn1a_assumptions" SNIa
-extract_block "stellar_yield_assumptions" SY
-extract_block "sn1a_rates" SNIaR
+# Standard categorical parameters used across your stacks
+COMP_LIST=( $(get_list comp_array) )
+IMF_LIST=( $(get_list imf_array) )
+SN1A_LIST=( $(get_list sn1a_assumptions) )
+YIELD_LIST=( $(get_list stellar_yield_assumptions) )
+SN1AR_LIST=( $(get_list sn1a_rates) )
+MGAL_LIST=( $(get_list mgal_values) )
+NB_LIST=( $(get_list nb_array) )
 
-# Sanity check
-for arrname in COMP IMFS SNIa SY SNIaR; do
-  eval "len=\${#${arrname}[@]}"
-  if (( len == 0 )); then
-    echo "Warning: no entries found for $arrname — will proceed with a single blank value." >&2
-  fi
-done
+# Fallback to single 'default' so the loops still run if a list is empty
+[[ ${#COMP_LIST[@]} -eq 0 ]] && COMP_LIST=(default)
+[[ ${#IMF_LIST[@]}  -eq 0 ]] && IMF_LIST=(default)
+[[ ${#SN1A_LIST[@]} -eq 0 ]] && SN1A_LIST=(default)
+[[ ${#YIELD_LIST[@]} -eq 0 ]] && YIELD_LIST=(default)
+[[ ${#SN1AR_LIST[@]} -eq 0 ]] && SN1AR_LIST=(default)
+[[ ${#MGAL_LIST[@]} -eq 0 ]] && MGAL_LIST=(default)
+[[ ${#NB_LIST[@]}   -eq 0 ]] && NB_LIST=(default)
 
-# Escape a value for safe sed replacement (slashes and ampersands)
-sed_escape () {
-  printf '%s' "$1" | sed -E 's/[\/&]/\\&/g'
-}
-
-# Write a per-combo pcard with categorical singletons and a unique output_path
-write_pcard () {
-  local src="$1" dst="$2" outdir="$3"
-  local comp="$4" imf="$5" s1a="$6" sy="$7" s1ar="$8"
-
-  cp "$src" "$dst"
-
-  # Replace output_path (single-quoted) — tolerate missing existing line by appending
-  if grep -qE '^\s*output_path\s*:' "$dst"; then
-    sed -i -E "s|^\s*output_path\s*:\s*.*$|output_path: '$(sed_escape "$outdir/")'|g" "$dst"
-  else
-    printf "\noutput_path: '%s'\n" "$outdir/" >> "$dst"
-  fi
-
-  # Force each categorical to a single-element list (strings)
-  sed -i -E "s|^\s*comp_array\s*:\s*.*$|comp_array: ['$(sed_escape "$comp")']|g" "$dst"
-  sed -i -E "s|^\s*imf_array\s*:\s*.*$|imf_array: ['$(sed_escape "$imf")']|g" "$dst"
-  sed -i -E "s|^\s*sn1a_assumptions\s*:\s*.*$|sn1a_assumptions: ['$(sed_escape "$s1a")']|g" "$dst"
-  sed -i -E "s|^\s*stellar_yield_assumptions\s*:\s*.*$|stellar_yield_assumptions: ['$(sed_escape "$sy")']|g" "$dst"
-  sed -i -E "s|^\s*sn1a_rates\s*:\s*.*$|sn1a_rates: ['$(sed_escape "$s1ar")']|g" "$dst"
-}
-
-# Compact tag making (letters to keep paths short)
-tagify () {
-  # lowercase, replace spaces/slashes with dashes, strip odd chars
-  echo "$1" | tr '[:upper:]' '[:lower:]' | sed -E 's|[ /]|-|g; s|[^a-z0-9._-]||g'
-}
-
-# Iterate all categorical combinations (5 nested)
 submit_count=0
-for comp in "${COMP[@]:-""}"; do
-  for imf in "${IMFS[@]:-""}"; do
-    for s1a in "${SNIa[@]:-""}"; do
-      for sy in "${SY[@]:-""}"; do
-        for s1ar in "${SNIaR[@]:-""}"; do
 
-          t_comp="$(tagify "$comp")"
-          t_imf="$(tagify "$imf")"
-          t_s1a="$(tagify "$s1a")"
-          t_sy="$(tagify "$sy")"
-          t_s1ar="$(tagify "$s1ar")"
+for comp in "${COMP_LIST[@]}"; do
+for imf in "${IMF_LIST[@]}"; do
+for s1a in "${SN1A_LIST[@]}"; do
+for sy in "${YIELD_LIST[@]}"; do
+for s1ar in "${SN1AR_LIST[@]}"; do
+for mgal in "${MGAL_LIST[@]}"; do
+for nb in "${NB_LIST[@]}"; do
 
-          RUN_TAG="c_${t_comp}__i_${t_imf}__a_${t_s1a}__y_${t_sy}__r_${t_s1ar}"
-          RUN_DIR="${ROOT_OUT}/${RUN_TAG}"
-          PC_DST="${RUN_DIR}/bulge_pcard.txt"
+  TAG="comp=${comp}__imf=${imf}__sn1a=${s1a}__yields=${sy}__sn1ar=${s1ar}__mgal=${mgal}__nb=${nb}"
+  RUN_DIR="${ROOT_OUT}/${TAG}"
+  mkdir -p "${RUN_DIR}/logs"
 
-          mkdir -p "$RUN_DIR"
-          write_pcard "$PCARD" "$PC_DST" "$RUN_DIR" "$comp" "$imf" "$s1a" "$sy" "$s1ar"
+  # Write per-run pcard with categorical picks + output_folder
+  PC_DST="${RUN_DIR}/bulge_pcard.txt"
+  cp "$PCARD" "$PC_DST"
 
-          # Submit from inside the run dir so relative paths inside your stack still work
-          ( cd "$ROOT_OUT" && sbatch "$SBATCH_SCRIPT" && "$RUN_DIR")
-          ((submit_count++))
-          echo "Submitted: ${RUN_TAG}"
-        done
-      done
-    done
-  done
-done
+  # Replace keys ONLY if they exist in the source pcard
+  sed -i -E \
+    -e "s|^(comp_array)[[:space:]]*=.*|\1 = ${comp}|;t" \
+    -e "s|^(imf_array)[[:space:]]*=.*|\1 = ${imf}|;t" \
+    -e "s|^(sn1a_assumptions)[[:space:]]*=.*|\1 = ${s1a}|;t" \
+    -e "s|^(stellar_yield_assumptions)[[:space:]]*=.*|\1 = ${sy}|;t" \
+    -e "s|^(sn1a_rates)[[:space:]]*=.*|\1 = ${s1ar}|;t" \
+    -e "s|^(mgal_values)[[:space:]]*=.*|\1 = ${mgal}|;t" \
+    -e "s|^(nb_array)[[:space:]]*=.*|\1 = ${nb}|;t" \
+    "$PC_DST"
+
+  # Force output_folder to the run dir (relative is fine since we --chdir)
+  if grep -qE '^[[:space:]]*output_folder[[:space:]]*=' "$PC_DST"; then
+    sed -i -E "s|^(output_folder)[[:space:]]*=.*|\1 = ./|g" "$PC_DST"
+  else
+    printf "\noutput_folder = ./\n" >> "$PC_DST"
+  fi
+
+  # Submit: chdir into run dir, use job name = tag, logs per run
+  sbatch --chdir "$RUN_DIR" \
+         --job-name "$TAG" \
+         --output "logs/%x_%j.out" \
+         --error  "logs/%x_%j.err" \
+         "$SBATCH_SCRIPT"
+
+  ((submit_count++))
+  echo "Submitted: $TAG"
+
+done; done; done; done; done; done; done
 
 echo "Done. Submitted ${submit_count} jobs."

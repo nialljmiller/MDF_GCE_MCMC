@@ -1,26 +1,36 @@
 #!/bin/bash
-#SBATCH --job-name=bulge_MCMC
-#SBATCH --output=logs/bulge_MCMC_%j.out
-#SBATCH --error=logs/bulge_MCMC_%j.err
+#SBATCH --job-name=BulgeMCMC
+#SBATCH --output=logs/%x_%j.out
+#SBATCH --error=logs/%x_%j.err
 #SBATCH --account=galacticbulge
-#SBATCH --partition=mb                 # Medicine Bow, preemptible
-#SBATCH --qos=fast                     # 12h max; higher priority
-#SBATCH --time=11:59:00
+#SBATCH --partition=mb
+#SBATCH --qos=fast
+#SBATCH --time=23:59:00
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=96             # grab all cores on the node
+#SBATCH --cpus-per-task=${SLURM_CPUS_PER_TASK:-96}
 #SBATCH --exclusive
 #SBATCH --requeue
-#SBATCH --signal=B:USR1@120            # warning before preempt/time limit
+#SBATCH --signal=B:USR1@120
 
 set -euo pipefail
 mkdir -p logs
 
+# Use venv if provided
 PYENV="${PYENV:-$HOME/python_projects/venv}"
-source "$PYENV/bin/activate"
+if [[ -f "$PYENV/bin/activate" ]]; then
+  source "$PYENV/bin/activate"
+fi
 
-cd "$SLURM_SUBMIT_DIR"
+# In run dir; use the per-run pcard we just wrote
+PCARD="./bulge_pcard.txt"
+if [[ ! -f "$PCARD" ]]; then
+  echo "Missing per-run pcard: $PCARD" >&2
+  exit 2
+fi
 
-# one process bound to all 96 cores
-FILE_PATH="${1:?usage: $0 <some_file_path>}"
-srun --cpu-bind=cores -n 1 python MDF_MCMC_Launcher.py "$FILE_PATH"
+# Launch the MCMC (assumes your launcher accepts pcard path)
+if command -v python3 >/dev/null 2>&1; then PY=python3; else PY=python; fi
+
+echo "Starting ${SLURM_JOB_NAME} in ${PWD}"
+exec srun -n 1 -c "${SLURM_CPUS_PER_TASK}" "$PY" -u MDF_MCMC_Launcher.py "$PCARD"
