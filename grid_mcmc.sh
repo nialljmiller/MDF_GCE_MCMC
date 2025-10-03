@@ -6,7 +6,7 @@
 set -euo pipefail
 
 PCARD="${1:-bulge_pcard.txt}"
-ROOT_OUT="${2:-runs_mcmc}"
+ROOT_OUT="${2:-.}"
 SBATCH_SCRIPT="$(pwd)/mcmc_sbatch.sh"   # absolute path to keep sbatch happy
 
 if [[ ! -f "$PCARD" ]]; then
