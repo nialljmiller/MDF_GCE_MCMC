@@ -59,7 +59,7 @@ def main():
     pcard_to_be_parsed = os.path.join(pcard_path, 'bulge_pcard.txt')
 
     # Parse parameters from the 'bulge_pcard.txt' file
-    params = Gal_GA.parse_inlist(pcard_to_be_parsed)
+    params = parse_inlist(pcard_to_be_parsed)
 
     # Normalize scalars -> lists (freezing handled in MDF_MCMC)
     def _ensure_list(x):
