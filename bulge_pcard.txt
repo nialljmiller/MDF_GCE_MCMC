@@ -215,8 +215,8 @@ infall_timescale_2_list: [0.1, 10.0]
 # Contentious: Primordial (<-2.0) rarely needed for bulge (mostly -1.5 to +0.5), but added for halo-like contributions; solar common for second infall.
 # References: Rojas-Arriagada et al. (2020, MNRAS, 499, 1037) for bulge MDF -1.5 to +0.5; Matteucci et al. (2024, A&A, 687, A11) including -2.0 for early gas; Chiappini et al. (2001) for -0.5 to solar in phases.
 ############################################################
-comp_array: ['iniab_output_feh_p050.txt','iniab_output_feh_p000.txt','iniab_output_feh_m050.txt','iniab_output_feh_m100.txt','iniab_output_feh_m150.txt','iniab_output_feh_m200.txt']
-#comp_array: ['iniab_output_feh_p000.txt']
+#comp_array: ['iniab_output_feh_p050.txt','iniab_output_feh_p000.txt','iniab_output_feh_m050.txt','iniab_output_feh_m100.txt','iniab_output_feh_m150.txt','iniab_output_feh_m200.txt']
+comp_array: ['iniab_output_feh_p000.txt']
 ############################################################
 #
 # Star formation efficiency (SFE): Fraction of gas converted to stars.
@@ -277,8 +277,8 @@ imf_upper_limits: [60, 130]  # Allow more massive stars
 # Contentious: Sub-Ch (Shen) may overproduce Mn, but essential for low-Z; near-Ch standard.
 # References: Gronow et al. (2021, A&A, 649, A155) near-Ch; Shen et al. (2018, ApJ, 857, 25) sub-Ch; Kobayashi et al. (2020, ApJ, 900, 179) for bulge GCE; Keegans et al. (2023, ApJ, 945, 107) benchmarking.
 ############################################################
-sn1a_assumptions: ['sn1a_Gronow.txt','sn1a_shen.txt']
-#sn1a_assumptions: ['sn1a_Gronow.txt']
+#sn1a_assumptions: ['sn1a_Gronow.txt','sn1a_shen.txt']
+sn1a_assumptions: ['sn1a_Gronow.txt']
 
 ############################################################
 #
@@ -345,8 +345,8 @@ nb_array: [0.5e-3, 1.5e-3]  # Sweep SN1a frequency
 # Contentious: Power-law (t^{-1}) standard but gauss fits clusters; exp for single-degenerate; maoz for observed rates.
 # References: Greggio (2005, A&A, 441, 1055) power-law; Strolger et al. (2004, ApJ, 613, 200) gaussian; Matteucci et al. (2001, A&A, 370, 951) exponential; Maoz et al. (2014) for empirical DTD.
 ############################################################
-#sn1a_rates: ['power_law']
-sn1a_rates: ['power_law','gauss','exp']
+sn1a_rates: ['power_law']
+#sn1a_rates: ['power_law','gauss','exp']
 
 ############################################################
 #
