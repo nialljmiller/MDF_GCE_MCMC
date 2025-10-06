@@ -30,4 +30,6 @@ if [[ ! -f "$PCARD" ]]; then
   exit 2
 fi
 
+unset SLURM_MEM_PER_CPU SLURM_MEM_PER_GPU SLURM_MEM_PER_NODE
+
 srun --cpu-bind=cores -n 1 python MDF_MCMC_Launcher.py "$FILE_PATH"
