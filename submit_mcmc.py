@@ -107,31 +107,30 @@ def main():
 
     args = ap.parse_args()
 
-    sbatch_path = pathlib.Path(args.sbatch).expanduser().resolve()
-    if not sbatch_path.is_file():
-        print(f"sbatch script not found: {sbatch_path}")
-
-    user_file = pathlib.Path(args.file_path).expanduser().resolve()
-    if not user_file.exists():
-        raise SystemExit(f"Input file does not exist: {user_file}")
-
-    file_abs = str(user_file)
-
-    # Build modified sbatch text
-    sbatch_text = sbatch_path.read_text()
-
-    # 1) set FILE_PATH
-    sbatch_text = set_file_path(sbatch_text, file_abs)
-
-    # 2) set/extend job-name
-    suffix = sanitize_job_suffix(user_file.stem)
-    sbatch_text = set_job_name(sbatch_text, suffix)
-
     cluster_pc = int(args.cluster_pc)
 
-
     if cluster_pc == 1:
-    
+        sbatch_path = pathlib.Path(args.sbatch).expanduser().resolve()
+        if not sbatch_path.is_file():
+            print(f"sbatch script not found: {sbatch_path}")
+
+        user_file = pathlib.Path(args.file_path).expanduser().resolve()
+        if not user_file.exists():
+            raise SystemExit(f"Input file does not exist: {user_file}")
+
+        file_abs = str(user_file)
+
+        # Build modified sbatch text
+        sbatch_text = sbatch_path.read_text()
+
+        # 1) set FILE_PATH
+        sbatch_text = set_file_path(sbatch_text, file_abs)
+
+        # 2) set/extend job-name
+        suffix = sanitize_job_suffix(user_file.stem)
+        sbatch_text = set_job_name(sbatch_text, suffix)
+
+
         # Write temp sbatch in same dir as original to preserve any relative references
         with tempfile.NamedTemporaryFile(
             "w", prefix=sbatch_path.stem + "_", suffix=".sbatch", dir=str(sbatch_path.parent), delete=False
