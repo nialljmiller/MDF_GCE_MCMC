@@ -109,7 +109,7 @@ def main():
 
     sbatch_path = pathlib.Path(args.sbatch).expanduser().resolve()
     if not sbatch_path.is_file():
-        raise SystemExit(f"sbatch script not found: {sbatch_path}")
+        print(f"sbatch script not found: {sbatch_path}")
 
     user_file = pathlib.Path(args.file_path).expanduser().resolve()
     if not user_file.exists():
