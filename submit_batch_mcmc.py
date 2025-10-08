@@ -104,7 +104,7 @@ def main():
 
         write_pcard(new_params, new_pcard_path, base_lines)
 
-        submit_cmd = ['python', 'submit_mcmc.py', os.path.abspath(config_dir)]
+        submit_cmd = ['python', 'submit_mcmc.py', os.path.abspath(config_dir), '0']
         print(f"\nSubmitting job for combination: {combo_name}")
         print(f"Config dir: {config_dir}")
         print(f"Output path: {new_params['output_path']}")

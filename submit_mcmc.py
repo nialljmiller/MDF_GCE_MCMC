@@ -7,6 +7,7 @@ import subprocess
 import sys
 import tempfile
 from datetime import datetime
+import os
 
 SBATCH_FILENAME = "mcmc.sbatch"  # default; override with -s
 
@@ -97,11 +98,13 @@ def main():
         description="Inject FILE_PATH and job-name into sbatch, submit, and archive the submitted sbatch next to the input file."
     )
     ap.add_argument("file_path", help="Path to pass into the Slurm job")
+    ap.add_argument("cluster_pc", default=0)
     ap.add_argument(
         "-s", "--sbatch",
         default=SBATCH_FILENAME,
         help=f"Path to the sbatch script (default: {SBATCH_FILENAME})",
     )
+
     args = ap.parse_args()
 
     sbatch_path = pathlib.Path(args.sbatch).expanduser().resolve()
@@ -124,37 +127,64 @@ def main():
     suffix = sanitize_job_suffix(user_file.stem)
     sbatch_text = set_job_name(sbatch_text, suffix)
 
-    # Write temp sbatch in same dir as original to preserve any relative references
-    with tempfile.NamedTemporaryFile(
-        "w", prefix=sbatch_path.stem + "_", suffix=".sbatch", dir=str(sbatch_path.parent), delete=False
-    ) as tf:
-        tf.write(sbatch_text)
-        temp_sbatch = pathlib.Path(tf.name)
+    cluster_pc = int(args.cluster_pc)
 
-    # Submit
-    try:
-        jobid = submit(temp_sbatch)
-    except Exception:
-        # leave temp file for debugging
-        raise
 
-    # Archive/move the submitted sbatch next to the input file
-    ts = datetime.now().strftime("%Y%m%d-%H%M%S")
-    dest_dir = user_file.parent / "submitted_jobs"
-    dest_dir.mkdir(parents=True, exist_ok=True)
-    dest_name = f"{sbatch_path.stem}_{suffix}_{ts}_jid{jobid}.sbatch"
-    dest_path = dest_dir / dest_name
+    if cluster_pc == 1:
+    
+        # Write temp sbatch in same dir as original to preserve any relative references
+        with tempfile.NamedTemporaryFile(
+            "w", prefix=sbatch_path.stem + "_", suffix=".sbatch", dir=str(sbatch_path.parent), delete=False
+        ) as tf:
+            tf.write(sbatch_text)
+            temp_sbatch = pathlib.Path(tf.name)
 
-    try:
-        shutil.move(str(temp_sbatch), str(dest_path))
-        print(f"Archived submitted sbatch to: {dest_path}")
-    except Exception as e:
-        print(f"Warning: failed to move submitted sbatch to archive ({e}). Left at: {temp_sbatch}")
+        # Submit
+        try:
+            jobid = submit(temp_sbatch)
+        except Exception:
+            # leave temp file for debugging
+            raise
 
-    # Final echo for easy grep in logs
-    print(f"JOBID={jobid}")
-    print(f"INPUT_FILE={user_file}")
-    print(f"SBATCH_ARCHIVE={dest_path if dest_path.exists() else temp_sbatch}")
+        # Archive/move the submitted sbatch next to the input file
+        ts = datetime.now().strftime("%Y%m%d-%H%M%S")
+        dest_dir = user_file.parent / "submitted_jobs"
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        dest_name = f"{sbatch_path.stem}_{suffix}_{ts}_jid{jobid}.sbatch"
+        dest_path = dest_dir / dest_name
+        
+
+        try:
+            shutil.move(str(temp_sbatch), str(dest_path))
+            print(f"Archived submitted sbatch to: {dest_path}")
+        except Exception as e:
+            print(f"Warning: failed to move submitted sbatch to archive ({e}). Left at: {temp_sbatch}")
+
+        # Final echo for easy grep in logs
+        print(f"JOBID={jobid}")
+        print(f"INPUT_FILE={user_file}")
+        print(f"SBATCH_ARCHIVE={dest_path if dest_path.exists() else temp_sbatch}")
+
+
+
+    else:
+
+        submit_cmd = ['python', 'MDF_MCMC_Launcher.py', os.path.abspath(args.file_path)]
+
+        try:
+            result = subprocess.run(submit_cmd, capture_output=True, text=True, check=True)
+            print(result.stdout)
+            if result.stderr:
+                print(f"Warning: {result.stderr}")
+        except subprocess.CalledProcessError as e:
+            print(f"Submission failed for {combo_name}: {e}")
+            print(e.stdout)
+            print(e.stderr)
+        except Exception as e:
+            print(f"Unexpected error submitting {combo_name}: {e}")
+
+
+
 
 if __name__ == "__main__":
     main()
